@@ -27,7 +27,7 @@ class AsyncfluxClient(object):
     PASSWORD = 'root'
 
     def __init__(self, host=None, port=None, username=None, password=None,
-                 is_secure=False, io_loop=None, **kwargs):
+                 is_secure=False, io_loop=None, timeout=None, **kwargs):
         scheme = 'https' if is_secure else 'http'
         host = host or self.HOST
         port = port or self.PORT
@@ -56,7 +56,7 @@ class AsyncfluxClient(object):
 
         self.__json = kwargs.get('json_module', json)
         self.io_loop = io_loop or ioloop.IOLoop.current()
-        self.http_client = httpclient.AsyncHTTPClient(self.io_loop)
+        self.http_client = httpclient.AsyncHTTPClient(self.io_loop, defaults={'request_timeout': timeout})
 
     @property
     def host(self):
