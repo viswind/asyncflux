@@ -26,6 +26,12 @@ class Database(object):
         yield self.client.delete_database(self.name)
 
     @asyncflux_coroutine
+    def query(self, query, params=None, raise_errors=True):
+        result_set = yield self.client.query(query, params, database=self.name,
+                                             raise_errors=raise_errors)
+        raise gen.Return(result_set)
+
+    @asyncflux_coroutine
     def get_user_names(self):
         users = yield self.client.request('/db/%(database)s/users',
                                           {'database': self.name})

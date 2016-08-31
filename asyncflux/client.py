@@ -16,6 +16,7 @@ from tornado import gen, httpclient, httputil, ioloop
 from asyncflux import clusteradmin, database, shardspace
 from asyncflux.errors import AsyncfluxError
 from asyncflux.util import asyncflux_coroutine, snake_case_dict
+from influxdb.resultset import ResultSet
 
 
 class AsyncfluxClient(object):
@@ -107,9 +108,26 @@ class AsyncfluxClient(object):
                 httputil.url_concat(url, qs), body=body, method=method,
                 auth_username=auth_username, auth_password=auth_password)
             if hasattr(response, 'body') and response.body:
-                raise gen.Return(self.__json.loads(response.body))
+                print(response.body.decode('utf-8'))
+                raise gen.Return(self.__json.loads(response.body.decode('utf-8')))
         except httpclient.HTTPError as e:
             raise AsyncfluxError(e.response)
+
+    @asyncflux_coroutine
+    def query(self, query, params=None, database=None, raise_errors=True):
+        params = params or {}
+        params['q'] = query
+        if database:
+            params['db'] = database
+
+        response = yield self.request('/query', qs=params)
+        result_set = [
+            ResultSet(result, raise_errors=raise_errors)
+            for result
+            in response.get('results', [])
+            ]
+        print(list(result_set[0]['columns']))
+        raise gen.Return(result_set)
 
     @asyncflux_coroutine
     def ping(self):
